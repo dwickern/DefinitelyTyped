@@ -39,6 +39,15 @@ declare module 'ember' {
         [P in keyof T]: UnwrapComputedPropertyGetter<T[P]>;
     }
 
+    type UnwrapComputedPropertySetter<T> =
+        T extends Ember.ComputedProperty<any, infer U> ? U :
+        T extends ModuleComputed<any, infer U> ? U :
+        T;
+
+    type UnwrapComputedPropertySetters<T> = {
+        [P in keyof T]: UnwrapComputedPropertySetter<T[P]>;
+    }
+
     type ComputedPropertyGetters<T> = { [K in keyof T]: Ember.ComputedProperty<T[K], any> | ModuleComputed<T[K], any> | T[K] };
     type ComputedPropertySetters<T> = { [K in keyof T]: Ember.ComputedProperty<any, T[K]> | ModuleComputed<any, T[K]> | T[K] };
 
@@ -1696,16 +1705,15 @@ declare module 'ember' {
             /**
              * Sets the provided key or path to the value.
              */
-            set<T, K extends keyof T>(this: ComputedPropertySetters<T>, key: K, value: T[K]): T[K];
+            set<K extends keyof this>(key: K, value: UnwrapComputedPropertySetter<this[K]>): UnwrapComputedPropertySetter<this[K]>;
             /**
              * Sets a list of properties at once. These properties are set inside
              * a single `beginPropertyChanges` and `endPropertyChanges` batch, so
              * observers will be buffered.
              */
-            setProperties<T, K extends keyof T>(
-                this: ComputedPropertySetters<T>,
-                hash: Pick<T, K>
-            ): Pick<T, K>;
+            setProperties<K extends keyof this>(
+                hash: Pick<UnwrapComputedPropertySetters<this>, K>
+            ): Pick<UnwrapComputedPropertySetters<this>, K>;
             /**
              * Convenience method to call `propertyWillChange` and `propertyDidChange` in
              * succession.
@@ -3220,8 +3228,8 @@ declare module 'ember' {
          * property is not defined but the object implements the `setUnknownProperty`
          * method then that will be invoked as well.
          */
-        function set<T, K extends keyof T, V extends T[K]>(
-            obj: ComputedPropertySetters<T>,
+        function set<T, K extends keyof T, V extends UnwrapComputedPropertySetter<T[K]>>(
+            obj: T,
             key: K,
             value: V
         ): V;
@@ -3237,9 +3245,9 @@ declare module 'ember' {
          * observers will be buffered.
          */
         function setProperties<T, K extends keyof T>(
-            obj: ComputedPropertySetters<T>,
-            hash: Pick<T, K>
-        ): Pick<T, K>;
+            obj: T,
+            hash: Pick<UnwrapComputedPropertySetters<T>, K>
+        ): Pick<UnwrapComputedPropertySetters<T>, K>;
         function setProperties<T, K extends keyof T>(obj: T, hash: Pick<T, K>): Pick<T, K>; // for dynamic K
         /**
          * Detects when a specific package of Ember (e.g. 'Ember.Application')
