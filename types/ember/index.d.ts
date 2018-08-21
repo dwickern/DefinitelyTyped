@@ -32,7 +32,6 @@ declare module 'ember' {
      */
     type UnwrapComputedPropertyGetter<T> =
         T extends Ember.ComputedProperty<infer U, any> ? U :
-        T extends ModuleComputed<infer U, any> ? U :
         T;
 
     type UnwrapComputedPropertyGetters<T> = {
@@ -41,7 +40,6 @@ declare module 'ember' {
 
     type UnwrapComputedPropertySetter<T> =
         T extends Ember.ComputedProperty<any, infer U> ? U :
-        T extends ModuleComputed<any, infer U> ? U :
         T;
 
     type UnwrapComputedPropertySetters<T> = {
@@ -3687,7 +3685,9 @@ declare module '@ember/object' {
 
 declare module '@ember/object/computed' {
     import Ember from 'ember';
-    export default class ComputedProperty<Get, Set = Get> extends Ember.ComputedProperty<Get, Set> { }
+    type ComputedProperty<Get, Set = Get> = Ember.ComputedProperty<Get, Set>;
+    const ComputedProperty: typeof Ember.ComputedProperty;
+    export default ComputedProperty;
     export const alias: typeof Ember.computed.alias;
     export const and: typeof Ember.computed.and;
     export const bool: typeof Ember.computed.bool;
