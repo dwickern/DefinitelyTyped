@@ -30,6 +30,15 @@ declare module 'ember' {
     /**
      * Deconstructs computed properties into the types which would be returned by `.get()`.
      */
+    type UnwrapComputedPropertyGetter<T> =
+        T extends Ember.ComputedProperty<infer U, any> ? U :
+        T extends ModuleComputed<infer U, any> ? U :
+        T;
+
+    type UnwrapComputedPropertyGetters<T> = {
+        [P in keyof T]: UnwrapComputedPropertyGetter<T[P]>;
+    }
+
     type ComputedPropertyGetters<T> = { [K in keyof T]: Ember.ComputedProperty<T[K], any> | ModuleComputed<T[K], any> | T[K] };
     type ComputedPropertySetters<T> = { [K in keyof T]: Ember.ComputedProperty<any, T[K]> | ModuleComputed<any, T[K]> | T[K] };
 
@@ -1677,16 +1686,13 @@ declare module 'ember' {
             /**
              * Retrieves the value of a property from the object.
              */
-            get<T, K extends keyof T>(this: ComputedPropertyGetters<T>, key: K): T[K];
+            get<K extends keyof this>(key: K): UnwrapComputedPropertyGetter<this[K]>;
             /**
              * To get the values of multiple properties at once, call `getProperties`
              * with a list of strings or an array:
              */
-            getProperties<T, K extends keyof T>(this: ComputedPropertyGetters<T>, list: K[]): Pick<T, K>;
-            getProperties<T, K extends keyof T>(
-                this: ComputedPropertyGetters<T>,
-                ...list: K[]
-            ): Pick<T, K>;
+            getProperties<K extends keyof this>(list: K[]): Pick<UnwrapComputedPropertyGetters<this>, K>;
+            getProperties<K extends keyof this>(...list: K[]): Pick<UnwrapComputedPropertyGetters<this>, K>;
             /**
              * Sets the provided key or path to the value.
              */
@@ -1735,11 +1741,10 @@ declare module 'ember' {
              * Retrieves the value of a property, or a default value in the case that the
              * property returns `undefined`.
              */
-            getWithDefault<T, K extends keyof T>(
-                this: ComputedPropertyGetters<T>,
+            getWithDefault<K extends keyof this>(
                 key: K,
-                defaultValue: T[K]
-            ): T[K];
+                defaultValue: UnwrapComputedPropertyGetter<this[K]>
+            ): UnwrapComputedPropertyGetter<this[K]>;
             /**
              * Set the value of a property to the current value plus some amount.
              */
@@ -1759,7 +1764,7 @@ declare module 'ember' {
              * without accidentally invoking it if it is intended to be
              * generated lazily.
              */
-            cacheFor<T, K extends keyof T>(this: ComputedPropertyGetters<T>, key: K): T[K] | undefined;
+            cacheFor<K extends keyof this>(key: K): UnwrapComputedPropertyGetter<this[K]> | undefined;
         }
         const Observable: Mixin<Observable, Ember.CoreObject>;
         /**
@@ -3046,9 +3051,9 @@ declare module 'ember' {
          * it to be created.
          */
         function cacheFor<T, K extends keyof T>(
-            obj: ComputedPropertyGetters<T>,
+            obj: T,
             key: K
-        ): T[K] | undefined;
+        ): UnwrapComputedPropertyGetter<T[K]> | undefined;
         /**
          * Add an event listener
          */
@@ -3095,14 +3100,14 @@ declare module 'ember' {
          * with an object followed by a list of strings or an array:
          */
         function getProperties<T, K extends keyof T>(
-            obj: ComputedPropertyGetters<T>,
+            obj: T,
             list: K[]
-        ): Pick<T, K>;
+        ): Pick<UnwrapComputedPropertyGetters<T>, K>;
         function getProperties<T, K extends keyof T>(obj: T, list: K[]): Pick<T, K>; // for dynamic K
         function getProperties<T, K extends keyof T>(
-            obj: ComputedPropertyGetters<T>,
+            obj: T,
             ...list: K[]
-        ): Pick<T, K>;
+        ): Pick<UnwrapComputedPropertyGetters<T>, K>;
         function getProperties<T, K extends keyof T>(obj: T, ...list: K[]): Pick<T, K>; // for dynamic K
         /**
          * A value is blank if it is empty or a whitespace string.
@@ -3197,17 +3202,17 @@ declare module 'ember' {
          * the function will be invoked. If the property is not defined but the
          * object implements the `unknownProperty` method then that will be invoked.
          */
-        function get<T, K extends keyof T>(obj: ComputedPropertyGetters<T>, key: K): T[K];
+        function get<T, K extends keyof T>(obj: T, key: K): UnwrapComputedPropertyGetter<T[K]>;
         function get<T, K extends keyof T>(obj: T, key: K): T[K]; // for dynamic K
         /**
          * Retrieves the value of a property from an Object, or a default value in the
          * case that the property returns `undefined`.
          */
         function getWithDefault<T, K extends keyof T>(
-            obj: ComputedPropertyGetters<T>,
+            obj: T,
             key: K,
-            defaultValue: T[K]
-        ): T[K];
+            defaultValue: UnwrapComputedPropertyGetter<T[K]>
+        ): UnwrapComputedPropertyGetter<T[K]>;
         function getWithDefault<T, K extends keyof T>(obj: T, key: K, defaultValue: T[K]): T[K]; // for dynamic K
         /**
          * Sets the value of a property on an object, respecting computed properties
