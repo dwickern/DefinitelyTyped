@@ -714,6 +714,8 @@ declare module 'ember' {
         This will force the cached result to be recomputed if the dependencies are modified.
         **/
         class ComputedProperty<Get, Set = Get> {
+            ___get___: Get;
+            ___set___: Set;
             /**
              * Call on a computed property to set it into non-cached mode. When in this
              * mode the computed property will not automatically cache the return value.
